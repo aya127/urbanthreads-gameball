@@ -1,7 +1,7 @@
 const BASE = 'https://api.gameball.co/api/v4.0/integrations'
 
 export async function gameballRequest(method, path, body, { apiKey, secretKey } = {}, needSecret = false) {
-  if (!apiKey) throw new Error('API Key is required. Enter it in the config bar at the top.')
+  if (!apiKey) throw new Error('API Key is required. Set VITE_GAMEBALL_API_KEY in your .env file.')
   if (needSecret && !secretKey) throw new Error('Secret Key is required for this operation.')
 
   const headers = { 'Content-Type': 'application/json', 'apikey': apiKey }

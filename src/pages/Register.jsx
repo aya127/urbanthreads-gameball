@@ -35,7 +35,7 @@ export default function Register() {
       setCustomerName(form.firstName)
       setStatus({
         type: 'success',
-        message: `Account created! Customer ID: ${customerId} — proceed to step 2 to complete your profile.`
+        message: `Account created! — proceed to step 2 to complete your profile.`
       })
     } catch (err) {
       setStatus({ type: 'error', message: err.message })

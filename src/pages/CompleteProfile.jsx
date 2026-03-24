@@ -40,7 +40,7 @@ export default function CompleteProfile() {
         }
       }, keys)
 
-      setStatus({ type: 'success', message: 'Profile saved and profile_completed event sent to Gameball.' })
+      setStatus({ type: 'success', message: 'Profile saved.' })
     } catch (err) {
       setStatus({ type: 'error', message: err.message })
     } finally {

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { SessionProvider, useSession } from './lib/SessionContext'
-import ConfigBar from './components/ConfigBar'
 import Register from './pages/Register'
 import CompleteProfile from './pages/CompleteProfile'
 import WriteReview from './pages/WriteReview'
@@ -47,7 +46,7 @@ function Inner() {
             {p.label}
           </button>
         ))}
-        <div style={{ marginTop: 'auto', paddingTop: '1rem', fontSize: 12, color: 'var(--text-hint)', borderTop: '0.5px solid var(--border)', paddingTop: '1rem' }}>
+        <div style={{ marginTop: 'auto', paddingTop: '1rem', fontSize: 12, color: 'var(--text-hint)', borderTop: '0.5px solid var(--border)' }}>
           {customerId
             ? <span>Session active</span>
             : <span>Start with step 1 to begin a session</span>
@@ -55,8 +54,7 @@ function Inner() {
         </div>
       </aside>
       <main className="main">
-        <ConfigBar />
-        {renderPage()}
+{renderPage()}
       </main>
     </div>
   )

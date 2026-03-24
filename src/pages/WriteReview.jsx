@@ -42,7 +42,7 @@ export default function WriteReview() {
 
       setStatus({
         type: 'success',
-        message: `Review submitted! Event sent with has_image: ${form.hasImage}. Gameball will trigger any matching reward campaigns.`
+        message: `Review submitted!`
       })
       setForm(f => ({ ...f, review: '', hasImage: false }))
     } catch (err) {

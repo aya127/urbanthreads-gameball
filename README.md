@@ -19,24 +19,40 @@ A mock e-commerce app demonstrating a full Gameball loyalty integration for the 
 ### Prerequisites
 
 - Node.js 18+
-- A Gameball account with an API Key and Secret Key (find them in Settings → API Keys)
+- A Gameball account with an API Key and Secret Key (find them in Settings → Admin Settings → Account Integration)
 
 ### Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/urbanthreads-gameball.git
+git clone https://github.com/aya127/urbanthreads-gameball.git
 cd urbanthreads-gameball
 npm install
+```
+
+### Configuration
+
+Create a `.env` file in the project root by copying the example:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and fill in your Gameball keys (find them in **Settings → Admin Settings → Account Integration**):
+
+```env
+VITE_GAMEBALL_API_KEY=your_api_key_here
+VITE_GAMEBALL_SECRET_KEY=your_secret_key_here
+```
+
+> The `.env` file is git-ignored and will never be committed.
+
+### Run
+
+```bash
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Configuration
-
-No `.env` file needed. Enter your **API Key** and **Secret Key** directly in the config bar at the top of the app. The keys are only used in-browser for this demo.
-
-> ⚠️ In production, never expose your Secret Key client-side. Proxy calls through your backend.
 
 ## Project Structure
 
@@ -46,7 +62,7 @@ src/
 │   ├── gameball.js          # All Gameball API calls
 │   └── SessionContext.jsx   # Shared session state (customerId, keys, holdRef)
 ├── components/
-│   ├── ConfigBar.jsx        # API key input + session indicator
+│   ├── ConfigBar.jsx        # Connection status indicator
 │   ├── StatusBanner.jsx     # Success / error / loading banners
 │   └── ApiHint.jsx          # Shows which API was called
 ├── pages/

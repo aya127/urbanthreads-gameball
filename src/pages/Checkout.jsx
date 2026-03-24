@@ -101,7 +101,7 @@ export default function Checkout() {
       setStatusHold(null)
       setStatusOrder({
         type: 'success',
-        message: `Order ${orderId} placed! Gameball is processing cashback on $${totalPaid.toFixed(2)} paid. Check your dashboard.`
+        message: `Order ${orderId} placed! You paid $${totalPaid}. Points will be awarded based on this amount.`
       })
       setTimeout(fetchBalance, 1500)
     } catch (err) {
