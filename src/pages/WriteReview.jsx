@@ -14,7 +14,7 @@ const PRODUCTS = [
 
 export default function WriteReview() {
   const { customerId, keys } = useSession()
-  const [form, setForm] = useState({ productId: 'PROD001', rating: '5', review: '', hasImage: false })
+  const [form, setForm] = useState({ productId: 'PROD001', rating: '5', review: '', image: null })
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -34,7 +34,7 @@ export default function WriteReview() {
           write_review: {
             product_id: form.productId,
             rating: parseInt(form.rating),
-            has_image: form.hasImage,
+            has_image: !!form.image,
             review_length: form.review.length,
           }
         }
@@ -44,7 +44,7 @@ export default function WriteReview() {
         type: 'success',
         message: `Review submitted!`
       })
-      setForm(f => ({ ...f, review: '', hasImage: false }))
+      setForm(f => ({ ...f, review: '', image: null }))
     } catch (err) {
       setStatus({ type: 'error', message: err.message })
     } finally {
@@ -88,16 +88,18 @@ export default function WriteReview() {
               onChange={set('review')}
             />
           </div>
-          <label className="checkbox-field">
+          <div className="field">
+            <label>Photo (optional)</label>
             <input
-              type="checkbox"
-              checked={form.hasImage}
-              onChange={e => setForm(f => ({ ...f, hasImage: e.target.checked }))}
+              type="file"
+              accept="image/*"
+              onChange={e => setForm(f => ({ ...f, image: e.target.files[0] ?? null }))}
             />
-            I'm attaching a photo with this review
-          </label>
-          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-hint)' }}>
-            Note: reviews with photos (<code>has_image: true</code>) can trigger a separate reward campaign in Gameball.
+            {form.image && (
+              <div style={{ fontSize: 12, color: 'var(--success-text)', marginTop: 6 }}>
+                {form.image.name} — review will be sent with <code>has_image: true</code>
+              </div>
+            )}
           </div>
           <button className="btn btn-primary" type="submit" style={{ marginTop: 14 }} disabled={loading}>
             {loading ? 'Submitting...' : 'Submit review →'}
