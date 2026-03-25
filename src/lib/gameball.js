@@ -36,11 +36,11 @@ export const getCustomerBalance = (customerId, keys) =>
 
 // Tier
 export const getCustomerTier = (customerId, keys) =>
-  gameballRequest('GET', `/customers/${customerId}/tier`, null, keys)
+  gameballRequest('GET', `/customers/${customerId}/tier-progress`, null, keys)
 
 // Campaigns / badges
 export const getCustomerCampaigns = (customerId, keys) =>
-  gameballRequest('GET', `/customers/${customerId}/campaigns`, null, keys)
+  gameballRequest('GET', `/customers/${customerId}/reward-campaigns-progress`, null, keys)
 
 // Hold points
 export const holdPoints = (payload, keys) =>
