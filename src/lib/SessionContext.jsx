@@ -19,7 +19,13 @@ export function SessionProvider({ children }) {
   }
   const [apiKey, setApiKey] = useState(import.meta.env.VITE_GAMEBALL_API_KEY || '')
   const [secretKey, setSecretKey] = useState(import.meta.env.VITE_GAMEBALL_SECRET_KEY || '')
-  const [holdReference, setHoldReference] = useState(null)
+  const [holdReference, setHoldReferenceState] = useState(() => localStorage.getItem('gb_hold_reference') || null)
+
+  const setHoldReference = (ref) => {
+    if (ref) localStorage.setItem('gb_hold_reference', ref)
+    else localStorage.removeItem('gb_hold_reference')
+    setHoldReferenceState(ref)
+  }
 
   const keys = { apiKey, secretKey }
 

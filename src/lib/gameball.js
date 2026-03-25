@@ -30,6 +30,10 @@ export const sendEvent = (payload, keys) =>
 export const getPointsBalance = (customerId, keys) =>
   gameballRequest('GET', `/customers/${customerId}/points`, null, keys)
 
+// Customer balance (available points for redemption)
+export const getCustomerBalance = (customerId, keys) =>
+  gameballRequest('GET', `/customers/${customerId}/balance`, null, keys, true)
+
 // Tier
 export const getCustomerTier = (customerId, keys) =>
   gameballRequest('GET', `/customers/${customerId}/tier`, null, keys)
@@ -41,6 +45,14 @@ export const getCustomerCampaigns = (customerId, keys) =>
 // Hold points
 export const holdPoints = (payload, keys) =>
   gameballRequest('POST', '/transactions/hold', payload, keys, true)
+
+// Unhold points
+export const unholdPoints = (holdReferenceId, keys) =>
+  gameballRequest('DELETE', `/transactions/hold/${holdReferenceId}`, null, keys, true)
+
+// Calculate order cashback (points preview)
+export const calculateOrderCashback = (payload, keys) =>
+  gameballRequest('POST', '/orders/cashback', payload, keys)
 
 // Place order (earn + redeem)
 export const placeOrder = (payload, keys) =>

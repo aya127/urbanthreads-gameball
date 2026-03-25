@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSession } from '../lib/SessionContext'
-import { getPointsBalance, holdPoints as holdPointsApi, placeOrder as placeOrderApi } from '../lib/gameball'
+import { getCustomerBalance, holdPoints as holdPointsApi, unholdPoints as unholdPointsApi, placeOrder as placeOrderApi, calculateOrderCashback } from '../lib/gameball'
 import StatusBanner from '../components/StatusBanner'
 import ApiHint from '../components/ApiHint'
 
@@ -10,27 +10,48 @@ const PRODUCTS = [
   { id: 'PROD003', name: 'Linen Overshirt', price: 79, emoji: '🧥' },
 ]
 
+const SHIPPING_RATES = { cairo: 5, giza: 6 }
+
 export default function Checkout() {
   const { customerId, keys, holdReference, setHoldReference } = useSession()
   const [selected, setSelected] = useState({ PROD001: PRODUCTS[0] })
-  const [redeemAmount, setRedeemAmount] = useState('')
-  const [pointsBalance, setPointsBalance] = useState(null)
+  const [city, setCity] = useState('')
+  const [balance, setBalance] = useState(null)
   const [statusHold, setStatusHold] = useState(null)
   const [statusOrder, setStatusOrder] = useState(null)
   const [loadingHold, setLoadingHold] = useState(false)
   const [loadingOrder, setLoadingOrder] = useState(false)
+  const [earnPreview, setEarnPreview] = useState(null)
+  const [heldAmount, setHeldAmount] = useState(0)
 
-  const total = Object.values(selected).reduce((s, p) => s + p.price, 0)
+  const subtotal = Object.values(selected).reduce((s, p) => s + p.price, 0)
+  const shipping = city ? (SHIPPING_RATES[city] ?? 0) : 0
+  const total = subtotal + shipping
+  const totalDiscount = holdReference ? heldAmount : 0
+  const totalPaid = Math.max(0, total - totalDiscount)
 
   useEffect(() => {
     if (customerId && keys.apiKey) fetchBalance()
   }, [customerId])
 
+  useEffect(() => {
+    if (!customerId || !keys.apiKey || !Object.keys(selected).length) return setEarnPreview(null)
+    const prods = Object.values(selected)
+    calculateOrderCashback({
+      customerId,
+      totalPaid,
+      totalPrice: subtotal,
+      totalDiscount,
+      totalShipping: shipping,
+      lineItems: prods.map(p => ({ productId: p.id, quantity: 1, price: p.price, category: ['clothing'] })),
+    }, keys).then(data => setEarnPreview(data.totalPoints)).catch(() => setEarnPreview(null))
+  }, [selected, holdReference, balance, city, totalPaid, totalDiscount])
+
   async function fetchBalance() {
     try {
-      const data = await getPointsBalance(customerId, keys)
-      setPointsBalance(data.availablePointsBalance ?? data.pointsBalance ?? 0)
-    } catch { setPointsBalance('—') }
+      const data = await getCustomerBalance(customerId, keys)
+      setBalance(data)
+    } catch { setBalance(null) }
   }
 
   function toggleProduct(p) {
@@ -44,18 +65,37 @@ export default function Checkout() {
 
   async function handleHoldPoints() {
     if (!customerId) return setStatusHold({ type: 'error', message: 'Complete step 1 first.' })
-    const amount = parseFloat(redeemAmount)
-    if (!amount || amount <= 0) return setStatusHold({ type: 'error', message: 'Enter a valid redemption amount.' })
+    const amount = balance?.avaliablePointsValue ?? 0
+    if (!amount || amount <= 0) return setStatusHold({ type: 'error', message: 'No points available for redemption.' })
 
     setLoadingHold(true)
     setStatusHold({ type: 'loading', message: 'Holding points — reserving for checkout...' })
     try {
-      const data = await holdPointsApi({ customerId, amount }, keys)
+      const data = await holdPointsApi({
+        customerId,
+        transactionTime: new Date().toISOString(),
+        amountToHold: amount,
+        ignoreOTP: true,
+      }, keys)
       setHoldReference(data.holdReference)
-      setStatusHold({
-        type: 'success',
-        message: `Points held! holdReference: ${data.holdReference} (expires in 10 min). Now place your order.`
-      })
+      setHeldAmount(amount)
+      setStatusHold({ type: 'success', message: `Discount applied.` })
+    } catch (err) {
+      setStatusHold({ type: 'error', message: err.message })
+    } finally {
+      setLoadingHold(false)
+    }
+  }
+
+  async function handleUnholdPoints() {
+    if (!holdReference) return
+    setLoadingHold(true)
+    try {
+      await unholdPointsApi(holdReference, keys)
+      setHoldReference(null)
+      setHeldAmount(0)
+      setStatusHold(null)
+      fetchBalance()
     } catch (err) {
       setStatusHold({ type: 'error', message: err.message })
     } finally {
@@ -67,12 +107,11 @@ export default function Checkout() {
     if (!customerId) return setStatusOrder({ type: 'error', message: 'Complete step 1 first.' })
     const prods = Object.values(selected)
     if (!prods.length) return setStatusOrder({ type: 'error', message: 'Select at least one product.' })
+    if (!city) return setStatusOrder({ type: 'error', message: 'Please select a city.' })
 
     setLoadingOrder(true)
     setStatusOrder({ type: 'loading', message: 'Placing order with Gameball...' })
     try {
-      const redeem = parseFloat(redeemAmount) || 0
-      const totalPaid = Math.max(0, total - (holdReference ? redeem : 0))
       const orderId = 'ORD_' + Date.now()
 
       const body = {
@@ -80,8 +119,9 @@ export default function Checkout() {
         orderId,
         orderDate: new Date().toISOString(),
         totalPaid,
-        totalPrice: total,
-        totalDiscount: holdReference ? redeem : 0,
+        totalPrice: subtotal,
+        totalDiscount,
+        totalShipping: shipping,
         lineItems: prods.map(p => ({
           productId: p.id,
           title: p.name,
@@ -97,11 +137,11 @@ export default function Checkout() {
 
       await placeOrderApi(body, keys)
       setHoldReference(null)
-      setRedeemAmount('')
+      setHeldAmount(0)
       setStatusHold(null)
       setStatusOrder({
         type: 'success',
-        message: `Order ${orderId} placed! You paid $${totalPaid}. Points will be awarded based on this amount.`
+        message: `Order ${orderId} placed! You paid $${totalPaid}. You'll earn ${earnPreview != null ? earnPreview + ' pts' : 'points'} on this order.`
       })
       setTimeout(fetchBalance, 1500)
     } catch (err) {
@@ -136,46 +176,72 @@ export default function Checkout() {
 
         <hr className="divider" />
 
-        <div className="metrics-grid">
-          <div className="metric">
-            <div className="metric-label">Order total</div>
-            <div className="metric-value">${total}</div>
-          </div>
-          <div className="metric">
-            <div className="metric-label">Points balance</div>
-            <div className="metric-value">{pointsBalance !== null ? `${pointsBalance} pts` : '—'}</div>
-          </div>
-          <div className="metric">
-            <div className="metric-label">Hold reference</div>
-            <div className="metric-value" style={{ fontSize: 13, paddingTop: 4 }}>
-              {holdReference ? <span style={{ color: 'var(--success-text)' }}>Active ✓</span> : 'None'}
-            </div>
-          </div>
+        <div className="card-title">Shipping address</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {Object.keys(SHIPPING_RATES).map(c => (
+            <button
+              key={c}
+              className={`btn btn-sm ${city === c ? 'btn-primary' : ''}`}
+              onClick={() => setCity(c)}
+            >
+              {c.charAt(0).toUpperCase() + c.slice(1)} (${SHIPPING_RATES[c]})
+            </button>
+          ))}
         </div>
 
-        <button className="btn btn-sm" onClick={fetchBalance} style={{ marginBottom: 0 }}>
-          ↻ Refresh balance
-        </button>
+        <hr className="divider" />
+
+        <div className="metrics-grid">
+          <div className="metric">
+            <div className="metric-label">Subtotal</div>
+            <div className="metric-value">${subtotal}</div>
+          </div>
+          <div className="metric">
+            <div className="metric-label">Shipping</div>
+            <div className="metric-value">{city ? `$${shipping}` : '—'}</div>
+          </div>
+          {totalDiscount > 0 && (
+            <div className="metric">
+              <div className="metric-label">Discount</div>
+              <div className="metric-value" style={{ color: 'var(--success-text)' }}>-${totalDiscount}</div>
+            </div>
+          )}
+          <div className="metric">
+            <div className="metric-label">Total to pay</div>
+            <div className="metric-value">${city ? totalPaid : `${subtotal - totalDiscount}+`}</div>
+          </div>
+          <div className="metric">
+            <div className="metric-label">Available points</div>
+            <div className="metric-value">{balance ? `${balance.avaliablePointsBalance} pts` : '—'}</div>
+          </div>
+        </div>
 
         <hr className="divider" />
 
         <div className="card-title">Redeem points (optional)</div>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-          Enter a dollar amount to redeem. This calls the Hold API to reserve points before checkout.
-        </p>
-        <div className="redeem-row">
-          <span style={{ fontSize: 13, whiteSpace: 'nowrap' }}>Redeem $</span>
-          <input
-            type="number" min="0" step="1"
-            placeholder="0"
-            value={redeemAmount}
-            onChange={e => setRedeemAmount(e.target.value)}
-            style={{ width: 100 }}
-          />
-          <button className="btn btn-sm" onClick={handleHoldPoints} disabled={loadingHold}>
-            {loadingHold ? 'Holding...' : 'Hold points'}
-          </button>
-        </div>
+        {holdReference ? (
+          <>
+            <p style={{ fontSize: 13, color: 'var(--success-text)', marginBottom: 12 }}>
+              ✓ ${balance?.avaliablePointsValue ?? 0} in points is held and will be applied at checkout.
+            </p>
+            <div className="redeem-row">
+              <button className="btn btn-sm" onClick={handleUnholdPoints} disabled={loadingHold}>
+                {loadingHold ? 'Cancelling...' : 'Cancel redemption'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Redeem your full available points balance (${balance?.avaliablePointsValue ?? 0}) as a discount.
+            </p>
+            <div className="redeem-row">
+              <button className="btn btn-sm" onClick={handleHoldPoints} disabled={loadingHold || !balance?.avaliablePointsValue}>
+                {loadingHold ? 'Holding...' : `Redeem $${balance?.avaliablePointsValue ?? 0}`}
+              </button>
+            </div>
+          </>
+        )}
         <StatusBanner status={statusHold} />
 
         <hr className="divider" />
@@ -185,13 +251,18 @@ export default function Checkout() {
           Places the order and awards cashback points on the amount paid.
           If a hold reference exists, it will be redeemed in the same call.
         </p>
-        <button className="btn btn-primary" onClick={handlePlaceOrder} disabled={loadingOrder}>
-          {loadingOrder ? 'Placing order...' : 'Place order & earn points →'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="btn btn-primary" onClick={handlePlaceOrder} disabled={loadingOrder}>
+            {loadingOrder ? 'Placing order...' : 'Place order & earn points →'}
+          </button>
+          {earnPreview != null && (
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>+{earnPreview} pts</span>
+          )}
+        </div>
         <StatusBanner status={statusOrder} />
 
         <ApiHint lines={[
-          'GET  /api/v4.0/integrations/customers/{id}/points',
+          'GET  /api/v4.0/integrations/customers/{id}/balance',
           'POST /api/v4.0/integrations/transactions/hold',
           'POST /api/v4.0/integrations/orders  (earn + redeem in one call)',
         ]} />

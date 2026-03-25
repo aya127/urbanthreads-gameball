@@ -18,7 +18,7 @@ const PAGES = [
 
 function Inner() {
   const [page, setPage] = useState('register')
-  const { customerId } = useSession()
+  const { customerId, customerName } = useSession()
 
   const renderPage = () => {
     switch (page) {
@@ -50,10 +50,14 @@ function Inner() {
           </button>
         ))}
         <div style={{ marginTop: 'auto', paddingTop: '1rem', fontSize: 12, color: 'var(--text-hint)', borderTop: '0.5px solid var(--border)' }}>
-          {customerId
-            ? <span>Session active</span>
-            : <span>Start with step 1 to begin a session</span>
-          }
+          {customerId ? (
+            <>
+              <div>Customer ID</div>
+              <div style={{ wordBreak: 'break-all' }}>{customerId}</div>
+            </>
+          ) : (
+            <span>Start with step 1 to begin a session</span>
+          )}
         </div>
       </aside>
       <main className="main">
