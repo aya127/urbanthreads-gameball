@@ -5,8 +5,7 @@ export async function gameballRequest(method, path, body, { apiKey, secretKey } 
   if (needSecret && !secretKey) throw new Error('Secret Key is required for this operation.')
 
   const headers = { 'Content-Type': 'application/json', 'apikey': apiKey }
-  if (needSecret && secretKey) headers['secretkey'] = secretKey
-  if (!needSecret && secretKey) headers['secretkey'] = secretKey // include if available
+  if (secretKey) headers['secretkey'] = secretKey
 
   const options = { method, headers }
   if (body) options.body = JSON.stringify(body)

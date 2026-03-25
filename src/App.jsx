@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SessionProvider, useSession } from './lib/SessionContext'
+import Login from './pages/Login'
 import Register from './pages/Register'
 import CompleteProfile from './pages/CompleteProfile'
 import WriteReview from './pages/WriteReview'
@@ -7,10 +8,11 @@ import Checkout from './pages/Checkout'
 import ProfilePage from './pages/ProfilePage'
 
 const PAGES = [
+  { id: 'login', label: 'Login', step: '↩' },
   { id: 'register', label: 'Register', step: '1' },
   { id: 'profile-complete', label: 'Complete Profile', step: '2' },
-  { id: 'review', label: 'Write a Review', step: '3' },
-  { id: 'checkout', label: 'Checkout', step: '4' },
+  { id: 'checkout', label: 'Checkout', step: '3' },
+  { id: 'review', label: 'Write a Review', step: '4' },
   { id: 'profile-page', label: 'My Profile', step: '5' },
 ]
 
@@ -20,6 +22,7 @@ function Inner() {
 
   const renderPage = () => {
     switch (page) {
+      case 'login': return <Login />
       case 'register': return <Register />
       case 'profile-complete': return <CompleteProfile />
       case 'review': return <WriteReview />

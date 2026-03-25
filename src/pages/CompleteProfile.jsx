@@ -22,7 +22,7 @@ export default function CompleteProfile() {
     try {
       // Update customer attributes
       const attrs = {}
-      if (form.phone) attrs.mobileNumber = form.phone
+      if (form.phone) attrs.mobile = form.phone
       if (form.dob) attrs.dateOfBirth = new Date(form.dob).toISOString()
       if (form.gender) attrs.gender = form.gender
 

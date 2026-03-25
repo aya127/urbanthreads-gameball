@@ -20,7 +20,7 @@ export default function Register() {
     setLoading(true)
     setStatus({ type: 'loading', message: 'Registering with Gameball...' })
     try {
-      const customerId = 'UT_' + Date.now()
+      const customerId = 'UT_' + crypto.randomUUID()
       await createOrUpdateCustomer({
         customerId,
         customerAttributes: {
@@ -31,11 +31,17 @@ export default function Register() {
           joinDate: new Date().toISOString(),
         }
       }, keys)
+
+      // persist so the user can log in again later
+      const stored = JSON.parse(localStorage.getItem('gb_customers') || '{}')
+      stored[form.email] = { customerId, firstName: form.firstName }
+      localStorage.setItem('gb_customers', JSON.stringify(stored))
+
       setCustomerId(customerId)
       setCustomerName(form.firstName)
       setStatus({
         type: 'success',
-        message: `Account created! — proceed to step 2 to complete your profile.`
+        message: `Account created! Your customer ID is ${customerId} — proceed to step 2 to complete your profile.`
       })
     } catch (err) {
       setStatus({ type: 'error', message: err.message })
