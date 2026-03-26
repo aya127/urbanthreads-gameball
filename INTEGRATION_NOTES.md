@@ -43,7 +43,7 @@ A fake "Login" page was added purely for demo convenience. It accepts any custom
 3. **Persist holdReference server-side** — Store the hold reference in your order session or database. A browser refresh mid-checkout should not lose the hold.
 4. **Webhook handling** — Subscribe to Gameball webhooks (tier upgrade, badge earned) to trigger real-time notifications in your app.
 5. **COD orders** — Do not fire `POST /orders` at checkout for cash-on-delivery. Fire it only after payment is confirmed to avoid awarding points for unpaid orders.
-6. **Refunds** — Wire `POST /transactions/reverse` into your refund flow to cancel cashback when an order is refunded.
+6. **Refunds** — Wire `POST /transactions/refund` into your refund flow to cancel cashback when an order is refunded.
 7. **Error handling & retries** — Add retry logic with exponential backoff for transient errors. Log failures to your observability stack.
 8. **Points expiry** — Surface upcoming expiry dates from the balance API to customers via email or push notifications to drive re-engagement.
 9. **Partial points redemption** — The Gameball Hold API supports redeeming any amount up to the available balance via `amountToHold`. This demo always holds the full balance for simplicity. In production, let customers choose how many points to redeem at checkout.
