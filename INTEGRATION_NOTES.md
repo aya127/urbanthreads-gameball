@@ -5,28 +5,44 @@
 | Flow | Endpoint | Reason |
 |---|---|---|
 | Registration | `POST /customers` | Creates or updates the customer in Gameball. Idempotent — safe to call on every login. |
-| Profile completed | `POST /events` (event: `profile_completed`) | Sends a named event with metadata; Gameball can trigger reward campaigns on this. |
-| Write review | `POST /events` (event: `write_review`) | Same event API. `has_image: true/false` in metadata distinguishes photo vs. text reviews, enabling separate campaigns for each. |
-| Points balance | `GET /customers/{id}/points` | Fetches available, pending, and redeemable values to show at checkout. |
-| Hold points | `POST /transactions/hold` | Reserves points before the order is confirmed — like a credit card auth hold. Returns a `holdReference` valid for 10 minutes. |
-| Place order + earn + redeem | `POST /orders` | Single call that (a) logs the order with line items, (b) awards cashback on `totalPaid`, and (c) redeems held points via `pointsHoldReference`. This is the correct e-commerce pattern — do not use the standalone cashback or redeem APIs for orders. |
-| Tier & badges | `GET /customers/{id}/tier`, `GET /customers/{id}/campaigns` | Fetches VIP tier progress and reward campaign completion for the profile page. |
+| Profile completed | `POST /events` (`profile_completed`) | Named event with metadata; Gameball can trigger reward campaigns on this. |
+| Write review | `POST /events` (`write_review`) | `has_image: true/false` in metadata distinguishes photo vs. text reviews, enabling separate reward campaigns for each type. |
+| Hold points | `POST /transactions/hold` | Reserves points before order is confirmed — like a card auth hold. Returns a `holdReference` valid for 10 min. |
+| Cancel hold | `DELETE /transactions/hold/{id}` | Releases the hold if the customer cancels redemption before placing the order. |
+| Cashback preview | `POST /orders/cashback` | Calculates expected points earned before order placement. Recalculates live as cart/city/redemption changes. |
+| Place order | `POST /orders` | Single call that logs the order, awards cashback on `totalPaid`, and redeems held points via `pointsHoldReference`. |
+| Points balance | `GET /customers/{id}/balance` | Fetches available points and redeemable value for checkout and profile. Requires Secret Key. |
+| Tier progress | `GET /customers/{id}/tier-progress` | Returns current tier, next tier, and progress score for the profile page. |
+| Badges | `GET /customers/{id}/reward-campaigns-progress` | Returns all reward campaigns with `achievedCount` and `completionPercentage` — covers EventBased, HighScore, Mission, and Streak types in one call. |
+
+## Demo-Only: Session Switching
+
+A fake "Login" page was added purely for demo convenience. It accepts any customer ID and sets it as the active session — all subsequent API calls (checkout, profile, events) run against that customer in Gameball. This makes it easy to test multiple customer journeys without re-registering. It is not a real authentication flow and has no equivalent in production.
 
 ## Assumptions
 
-- **No backend**: All API calls are made client-side (browser → Gameball). This is fine for a demo but not for production (see below).
-- **Customer IDs**: Generated as `UT_{timestamp}` on registration. In production this would be your database user ID.
-- **Secret Key**: Included in the Hold and Order calls as required. The UI accepts it as an input field.
-- **Points redemption factor**: Assumed to be configured in the Gameball dashboard. The app passes a dollar `amount` to the Hold API; Gameball calculates the points deduction.
-- **Campaigns/badges**: Returned from the campaigns API. Badges are shown with a progress bar based on `completionPercentage`.
+- **No backend** — All calls are made client-side. Acceptable for a demo; not for production (see below).
+- **Customer IDs** — Generated as `ut_{uuid}` on registration. In production this would be your database user ID.
+- **Secret Key in client** — Required for hold, order, and balance endpoints. Entered via UI config bar. In production this must move server-side.
+- **Full points redemption** — The app holds the customer's full available balance. Partial redemption is not supported in this demo.
+- **Shipping not excluded from points** — Points are calculated on `totalPaid` which includes shipping. Whether shipping earns points depends on the Gameball dashboard configuration.
+- **Streak/stamp detail** — `reward-campaigns-progress` is used for all badge types. The dedicated `/streaks/{id}` and `/stamps/{id}` endpoints (which expose milestone badges and step-level progress) are not called, as the top-level response satisfies the display requirements.
+
+## Known Issues / API Behavior
+
+- **Typo in balance response** — `GET /customers/{id}/balance` returns `avaliablePointsBalance` and `avaliablePointsValue` (`avaliable` instead of `available`). Any client code using the documented field names receives `undefined`, which silently falls back to 0 — making it appear the customer has no redeemable balance even when they do. Worked around in code by using the misspelled field names directly.
+
+- **Typo in tier-progress response** — `GET /customers/{id}/tier-progress` returns `minPorgress` (misspelled) on both the `current` and `next` tier objects. Expected field name is `minProgress`. Worked around in code by reading `minPorgress` directly.
+
+- **Cashback preview ignores redemption discount** — The `POST /orders/cashback` endpoint documents that points are calculated on `totalPaid`. In practice, the API appears to compute points per line item using `price` and adds `totalShipping` separately, returning the full pre-discount amount regardless of `totalPaid`. For example, an order with subtotal $29 + shipping $5 − $11 redemption (totalPaid: $23) still returns 34 pts instead of 23 pts. The fix would be to distribute `totalDiscount` proportionally across line items using the line item `discount` field. This is noted as a discrepancy between the documentation and observed API behavior and should be verified with Gameball support.
 
 ## What I'd Do Differently in Production
 
-1. **Move API calls server-side**: Never expose your Secret Key in client-side code. Proxy all Gameball calls through your backend (Node/Python/etc.), which holds the keys in environment variables.
-2. **Use your real user ID**: Replace the `UT_{timestamp}` ID with your database's user primary key for a stable, lifetime identifier.
-3. **Store holdReference server-side**: Keep the hold reference in your order session/DB, not just in React state. If the user refreshes mid-checkout, the hold is lost.
-4. **Webhook handling**: Subscribe to Gameball webhooks (tier upgrades, badge earned) to trigger real-time UI notifications in your app.
-5. **Error handling & retries**: Add retry logic with exponential backoff for transient Gameball API errors. Log failures to your observability stack.
-6. **COD orders**: For cash-on-delivery, do not fire the Order API at checkout — fire it only after payment is confirmed (delivery + payment received), to avoid awarding points for unpaid orders.
-7. **Refunds**: Use `POST /transactions/reverse` to cancel cashback if an order is refunded. Wire this into your refund flow.
-8. **Points expiry**: Inform customers of upcoming point expiry dates (available in the balance API response) via email/push to drive re-engagement.
+1. **Move API calls server-side** — Never expose the Secret Key in client code. Proxy all Gameball calls through your backend, which holds keys in environment variables.
+2. **Use your real user ID** — Replace the generated ID with your database's user primary key for a stable, lifetime identifier.
+3. **Persist holdReference server-side** — Store the hold reference in your order session or database. A browser refresh mid-checkout should not lose the hold.
+4. **Webhook handling** — Subscribe to Gameball webhooks (tier upgrade, badge earned) to trigger real-time notifications in your app.
+5. **COD orders** — Do not fire `POST /orders` at checkout for cash-on-delivery. Fire it only after payment is confirmed to avoid awarding points for unpaid orders.
+6. **Refunds** — Wire `POST /transactions/reverse` into your refund flow to cancel cashback when an order is refunded.
+7. **Error handling & retries** — Add retry logic with exponential backoff for transient errors. Log failures to your observability stack.
+8. **Points expiry** — Surface upcoming expiry dates from the balance API to customers via email or push notifications to drive re-engagement.
