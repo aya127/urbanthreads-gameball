@@ -130,7 +130,7 @@ export default function Checkout() {
         })),
       }
 
-      if (holdReference) {
+      if (holdReference && heldAmount > 0) {
         body.redemption = { pointsHoldReference: holdReference }
       }
 
@@ -218,10 +218,10 @@ export default function Checkout() {
         <hr className="divider" />
 
         <div className="card-title">Redeem points (optional)</div>
-        {holdReference ? (
+        {holdReference && heldAmount > 0 ? (
           <>
             <p style={{ fontSize: 13, color: 'var(--success-text)', marginBottom: 12 }}>
-              ✓ ${balance?.avaliablePointsValue ?? 0} in points is held and will be applied at checkout.
+              ✓ ${heldAmount} in points is held and will be applied at checkout.
             </p>
             <div className="redeem-row">
               <button className="btn btn-sm" onClick={handleUnholdPoints} disabled={loadingHold}>
@@ -231,9 +231,11 @@ export default function Checkout() {
           </>
         ) : (
           <>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-              Redeem your full available points balance (${balance?.avaliablePointsValue ?? 0}) as a discount.
-            </p>
+            {balance?.avaliablePointsValue > 0 && (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                Redeem your full available points balance (${balance.avaliablePointsValue}) as a discount.
+              </p>
+            )}
             <div className="redeem-row">
               <button className="btn btn-sm" onClick={handleHoldPoints} disabled={loadingHold || !balance?.avaliablePointsValue}>
                 {loadingHold ? 'Holding...' : `Redeem $${balance?.avaliablePointsValue ?? 0}`}
