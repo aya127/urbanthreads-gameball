@@ -213,6 +213,12 @@ export default function Checkout() {
             <div className="metric-label">Available points</div>
             <div className="metric-value">{balance ? `${balance.avaliablePointsBalance} pts` : '—'}</div>
           </div>
+          {balance?.pendingPoints > 0 && (
+            <div className="metric">
+              <div className="metric-label">Pending points</div>
+              <div className="metric-value" style={{ color: 'var(--text-muted)' }}>{balance.pendingPoints} pts</div>
+            </div>
+          )}
         </div>
 
         <hr className="divider" />

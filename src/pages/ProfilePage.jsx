@@ -122,6 +122,12 @@ export default function ProfilePage() {
                 <div className="metric-label">Redeemable value</div>
                 <div className="metric-value">${data.pointsData.avaliablePointsValue ?? '—'}</div>
               </div>
+              {data.pointsData.pendingPoints > 0 && (
+                <div className="metric">
+                  <div className="metric-label">Pending points</div>
+                  <div className="metric-value" style={{ color: 'var(--text-muted)' }}>{data.pointsData.pendingPoints} pts</div>
+                </div>
+              )}
               <div className="metric">
                 <div className="metric-label">VIP tier</div>
                 <div className="metric-value" style={{ fontSize: 16, paddingTop: 4 }}>
