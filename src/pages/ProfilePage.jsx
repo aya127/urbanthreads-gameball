@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSession } from '../lib/SessionContext'
 import { getCustomerBalance, getCustomerTier, getCustomerCampaigns } from '../lib/gameball'
-import ApiHint from '../components/ApiHint'
 
 function TierPill({ name }) {
   const lower = (name || '').toLowerCase()
@@ -185,11 +184,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <ApiHint lines={[
-            `GET /api/v4.0/integrations/customers/${customerId}/balance`,
-            `GET /api/v4.0/integrations/customers/${customerId}/tier-progress`,
-            `GET /api/v4.0/integrations/customers/${customerId}/reward-campaigns-progress`,
-          ]} />
         </>
       )}
     </div>

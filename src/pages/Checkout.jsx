@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useSession } from '../lib/SessionContext'
 import { getCustomerBalance, holdPoints as holdPointsApi, unholdPoints as unholdPointsApi, placeOrder as placeOrderApi, calculateOrderCashback } from '../lib/gameball'
 import StatusBanner from '../components/StatusBanner'
-import ApiHint from '../components/ApiHint'
 
 const PRODUCTS = [
   { id: 'PROD001', name: 'Classic White Tee', price: 29, emoji: '👕' },
@@ -261,11 +260,6 @@ export default function Checkout() {
         </div>
         <StatusBanner status={statusOrder} />
 
-        <ApiHint lines={[
-          'GET  /api/v4.0/integrations/customers/{id}/balance',
-          'POST /api/v4.0/integrations/transactions/hold',
-          'POST /api/v4.0/integrations/orders  (earn + redeem in one call)',
-        ]} />
       </div>
     </div>
   )

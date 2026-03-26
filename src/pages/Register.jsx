@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useSession } from '../lib/SessionContext'
 import { createOrUpdateCustomer } from '../lib/gameball'
 import StatusBanner from '../components/StatusBanner'
-import ApiHint from '../components/ApiHint'
 
 export default function Register() {
   const { setCustomerId, setCustomerName, keys } = useSession()
@@ -83,7 +82,6 @@ export default function Register() {
           </button>
         </form>
         <StatusBanner status={status} />
-        <ApiHint lines={['POST /api/v4.0/integrations/customers']} />
       </div>
     </div>
   )

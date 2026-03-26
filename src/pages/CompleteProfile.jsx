@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useSession } from '../lib/SessionContext'
 import { createOrUpdateCustomer, sendEvent } from '../lib/gameball'
 import StatusBanner from '../components/StatusBanner'
-import ApiHint from '../components/ApiHint'
 
 export default function CompleteProfile() {
   const { customerId, keys } = useSession()
@@ -81,10 +80,6 @@ export default function CompleteProfile() {
           </button>
         </form>
         <StatusBanner status={status} />
-        <ApiHint lines={[
-          'POST /api/v4.0/integrations/customers  (update attributes)',
-          'POST /api/v4.0/integrations/events  (profile_completed event)'
-        ]} />
       </div>
     </div>
   )

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useSession } from '../lib/SessionContext'
 import { sendEvent } from '../lib/gameball'
 import StatusBanner from '../components/StatusBanner'
-import ApiHint from '../components/ApiHint'
 
 const PRODUCTS = [
   { id: 'PROD001', name: 'Classic White Tee', price: 29 },
@@ -106,10 +105,6 @@ export default function WriteReview() {
           </button>
         </form>
         <StatusBanner status={status} />
-        <ApiHint lines={[
-          'POST /api/v4.0/integrations/events',
-          'Event: write_review { product_id, rating, has_image, review_length }'
-        ]} />
       </div>
     </div>
   )
