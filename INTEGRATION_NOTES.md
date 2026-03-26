@@ -34,7 +34,7 @@ A fake "Login" page was added purely for demo convenience. It accepts any custom
 
 - **Typo in tier-progress response** — `GET /customers/{id}/tier-progress` returns `minPorgress` (misspelled) on both the `current` and `next` tier objects. Expected field name is `minProgress`. Worked around in code by reading `minPorgress` directly.
 
-- **Cashback preview ignores redemption discount** — The `POST /orders/cashback` endpoint documents that points are calculated on `totalPaid`. In practice, the API appears to compute points per line item using `price` and adds `totalShipping` separately, returning the full pre-discount amount regardless of `totalPaid`. For example, an order with subtotal $29 + shipping $5 − $11 redemption (totalPaid: $23) still returns 34 pts instead of 23 pts. The fix would be to distribute `totalDiscount` proportionally across line items using the line item `discount` field. This is noted as a discrepancy between the documentation and observed API behavior and should be verified with Gameball support.
+- **Cashback preview ignores redemption discount** — The `POST /orders/cashback` endpoint documents that points are calculated on `totalPaid`. In practice, the API appears to compute points per line item using `totalPrice`, returning the full pre-discount amount regardless of `totalPaid`. For example, an order with subtotal $29 + shipping $5 − $11 redemption (totalPaid: $23) still returns 34 pts (29 + 5) instead of 23 pts (29 + 5 - 11). The workaround fix would be to send the `totalPrice` as the `totalPaid`. This is noted as a discrepancy between the documentation and observed API behavior and should be verified with Gameball support.
 
 ## What I'd Do Differently in Production
 
