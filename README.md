@@ -43,6 +43,8 @@ VITE_GAMEBALL_SECRET_KEY=your_secret_key_here
 
 > The `.env` file is git-ignored and will never be committed.
 
+> **Test vs. Live data** — If you use a Test API Key, all activity will appear under **Test Data** in your Gameball dashboard. If you use a Live API Key, it will appear under **Live Data**. Make sure you're looking at the right environment when verifying results.
+
 ### Run
 
 ```bash
