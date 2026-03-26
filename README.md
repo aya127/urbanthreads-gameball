@@ -2,24 +2,21 @@
 
 A mock e-commerce app demonstrating a full Gameball loyalty integration for the UrbanThreads fictional clothing store.
 
-## Live Demo
-
-> Deploy to Vercel or Netlify in one click, or run locally below.
-
 ## Features
 
-- **Customer Registration** — registers users in Gameball via `POST /customers`
+- **Session Switching** — fake login page to switch between customer sessions for demo purposes
+- **Customer Registration** — registers customers in Gameball via `POST /customers`
 - **Profile Completion** — sends a `profile_completed` event with metadata
-- **Write a Review** — sends a `write_review` event; distinguishes photo vs. text-only reviews via `has_image` metadata
-- **Checkout (Earn + Redeem)** — fetches points balance → holds points → places order with cashback + redemption in a single Order API call
-- **Loyalty Profile Page** — displays points balance, VIP tier with progress, and all badge/campaign statuses
+- **Checkout (Earn + Redeem)** — city-based shipping, live cashback preview, optional points redemption (hold → place order), and earnedpoints shown on success
+- **Write a Review** — sends a `write_review` event; attaching an image sets `has_image: true` to enable separate reward campaigns
+- **Loyalty Profile Page** — auto-loads points balance, VIP tier with progress toward next tier, and all reward campaign statuses split into achieved vs. not yet achieved
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- A Gameball account with an API Key and Secret Key (find them in Settings → Admin Settings → Account Integration)
+- A Gameball account with an API Key and Secret Key (find them in **Settings → Admin Settings → Account Integration**)
 
 ### Installation
 
@@ -31,13 +28,13 @@ npm install
 
 ### Configuration
 
-Create a `.env` file in the project root by copying the example:
+Create a `.env` file in the project root:
 
 ```bash
 cp .env.example .env
 ```
 
-Then open `.env` and fill in your Gameball keys (find them in **Settings → Admin Settings → Account Integration**):
+Fill in your Gameball keys:
 
 ```env
 VITE_GAMEBALL_API_KEY=your_api_key_here
@@ -60,23 +57,23 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 src/
 ├── lib/
 │   ├── gameball.js          # All Gameball API calls
-│   └── SessionContext.jsx   # Shared session state (customerId, keys, holdRef)
+│   └── SessionContext.jsx   # Shared session state (customerId, keys, holdReference)
 ├── components/
-│   ├── ConfigBar.jsx        # Connection status indicator
-│   ├── StatusBanner.jsx     # Success / error / loading banners
-│   └── ApiHint.jsx          # Shows which API was called
+│   ├── ConfigBar.jsx        # API key connection status
+│   └── StatusBanner.jsx     # Success / error / loading banners
 ├── pages/
+│   ├── Login.jsx            # Session switcher (demo only)
 │   ├── Register.jsx         # Step 1: customer registration
-│   ├── CompleteProfile.jsx  # Step 2: profile event
-│   ├── WriteReview.jsx      # Step 3: review event
-│   ├── Checkout.jsx         # Step 4: hold + order flow
-│   └── ProfilePage.jsx      # Step 5: points, tier, badges
-└── App.jsx                  # Layout + routing
+│   ├── CompleteProfile.jsx  # Step 2: profile_completed event
+│   ├── Checkout.jsx         # Step 3: shipping, cashback preview, hold + order
+│   ├── WriteReview.jsx      # Step 4: write_review event with optional image
+│   └── ProfilePage.jsx      # Step 5: points, tier progress, badges
+└── App.jsx                  # Layout + navigation
 ```
 
 ## API Reference
 
-See [INTEGRATION_NOTES.md](./INTEGRATION_NOTES.md) for a full breakdown of every API endpoint used and production recommendations.
+See [INTEGRATION_NOTES.md](./INTEGRATION_NOTES.md) for a full breakdown of every endpoint used, assumptions made, known API issues, and production recommendations.
 
 ## Built With
 
